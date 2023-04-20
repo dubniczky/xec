@@ -1,0 +1,6 @@
+cmd: ls
+args:
+- l
+- a
+stdout: 
+stderr:
