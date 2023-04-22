@@ -1,6 +1,7 @@
 cmd: ls
-args:
+flags:
 - l
 - a
+args:
 stdout: 
 stderr:

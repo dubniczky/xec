@@ -1,9 +1,12 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -20,6 +23,7 @@ var defaultLocalpaths = []string{
 
 type Config struct {
 	Cmd string
+	Flags []string
 	Args []string
 	Stdout string
 	Stderr string
@@ -51,17 +55,26 @@ func parseConfig(data []byte) (Config, error) {
 func assembleCommand(conf Config) string {
 	cmd := conf.Cmd
 
-	// Arg
+	// Flags
+	for _, flag := range conf.Flags {
+		if len(flag) == 0 {
+			continue
+		}
+		if len(flag) == 1 {
+			cmd += " -" + flag
+			continue
+		}
+		
+		cmd += " --" + flag
+	}
+
+	// Args
 	for _, arg := range conf.Args {
 		if len(arg) == 0 {
 			continue
 		}
-		if len(arg) == 1 {
-			cmd += " -" + arg
-			continue
-		}
 		
-		cmd += " --" + arg
+		cmd += " " + arg
 	}
 
 	// Stdout & Stderr
@@ -75,11 +88,37 @@ func assembleCommand(conf Config) string {
 	return cmd
 }
 
+func start(conf Config, showFlag bool) bool {
+	cmd := assembleCommand(conf)
+	if showFlag {
+		fmt.Println(cmd)
+		return false
+	}
+
+	cmdWords := strings.Split(cmd, " ")
+	command := exec.Command(cmdWords[0], cmdWords[1:]...)
+	command.Stdout = os.Stdout
+	command.Stderr = os.Stderr
+	command.Stdin = os.Stdin
+    err := command.Run()
+
+    if err != nil {
+        log.Fatal(err)
+		return false
+    }
+	return true
+}
+
 func main() {
 	logerr := log.New(os.Stderr, "ERROR: ", 0)
 
+	var showFlag bool
+	flag.BoolVar(&showFlag, "show", false, "Show the command that would be run from the config file")
+
+	flag.Parse()
+
 	// Try default local paths if no argument is provided
-	if len(os.Args) < 2 {
+	if len(flag.Args()) < 1 {
 		for _, path := range defaultLocalpaths {
 			configFile, err := os.ReadFile(path)
 			if err == nil {
@@ -89,7 +128,7 @@ func main() {
 					logerr.Printf("Could not parse config file: %s", path)
 					os.Exit(1)
 				}
-				fmt.Println(assembleCommand(conf))
+				start(conf, showFlag)
 				return
 			}
 		}
@@ -99,8 +138,8 @@ func main() {
 	}
 
 	// Read config file from argument
-	path := os.Args[1]
+	path := flag.Arg(0)
 	conf := readConfig(path)
-	fmt.Println(assembleCommand(conf))
+	start(conf, showFlag)
 	os.Exit(0)
 }
