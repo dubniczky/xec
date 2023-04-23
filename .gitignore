@@ -1,0 +1,9 @@
+build/
+bin/
+dist/
+lib/
+
+.vscode/
+.DS_Store
+
+/.xec
