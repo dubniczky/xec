@@ -1,7 +1,0 @@
-cmd: ls
-flags:
-- l
-- a
-args:
-stdout: 
-stderr:
