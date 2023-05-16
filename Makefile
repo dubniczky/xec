@@ -1,3 +1,8 @@
+# Do a test build and run of the project
+all::
+	$(MAKE) build
+	$(MAKE) start
+
 # Builds the application for the current system
 .PHONY: build
 build:: src/*.go

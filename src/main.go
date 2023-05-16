@@ -24,7 +24,9 @@ var defaultLocalpaths = []string{
 type Config struct {
 	Cmd string
 	Flags []string
+	Params map[string]string
 	Args []string
+	ErrorBehavior string
 	Stdout string
 	Stderr string
 }
@@ -66,6 +68,20 @@ func assembleCommand(conf Config) string {
 		}
 		
 		cmd += " --" + flag
+	}
+
+	// Params
+	for key, value := range conf.Params {
+		if len(value) == 0 {
+			continue
+		}
+
+		if len(key) == 1 {
+			cmd += " -" + key + " " + value
+			continue
+		}
+		
+		cmd += " --" + key + " " + value
 	}
 
 	// Args
